@@ -1,5 +1,8 @@
 import h5py 
 from functools import reduce
+from sklearn.model_selection import train_test_split
+import numpy as np
+import tensorflow as tf
 
 def hdf5(path, data_key = "data", target_key = "target", flatten = True):
     """
@@ -70,8 +73,6 @@ batch_size, x_train, x_test, y_train, y_test = get_usps()
 x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.2, random_state=42)
 
 ### Load the model(Cifar-Net)
-
-from __future__ import print_function
 import keras
 from keras.datasets import cifar10
 from keras.preprocessing.image import ImageDataGenerator
@@ -85,9 +86,6 @@ batch_size = 32
 num_classes = 10
 epochs = 100
 # data_augmentation = True
-
-# Convert class vectors to binary class matrices.
-train_labels = keras.utils.to_categorical(train_labels, num_classes)
 
 
 # Set random seed for Numpy
