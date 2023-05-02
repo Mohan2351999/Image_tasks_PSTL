@@ -132,12 +132,12 @@ model.compile(loss='categorical_crossentropy',
               optimizer=opt,
               metrics=['accuracy'])
 
-### Assuming no data augmentation required...
-model.fit(x_train, y_train,
-              batch_size=batch_size,
-              epochs=epochs,
-              validation_data=(x_val, y_val),
-              shuffle=True)
+# ### Assuming no data augmentation required...
+# model.fit(x_train, y_train,
+#               batch_size=batch_size,
+#               epochs=epochs,
+#               validation_data=(x_val, y_val),
+#               shuffle=True)
 
 
 # model_json = model.to_json()
@@ -145,8 +145,8 @@ model.fit(x_train, y_train,
 #     json_file.write(model_json)
 
 # serialize weights to HDF5
-model.save("mnist_to_usps_finetuning_train.h5")
-print("Saved model to disk!!!!")
+# model.save("mnist_to_usps_finetuning_train.h5")
+# print("Saved model to disk!!!!")
 
 score = model.evaluate(x_test, y_test)
-print("The evaluation score is(tranfering weights): ", score)
+print("The evaluation score is(zero-shot): ", score)

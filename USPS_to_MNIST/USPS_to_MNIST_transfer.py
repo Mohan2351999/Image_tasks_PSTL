@@ -3,70 +3,31 @@ from functools import reduce
 from sklearn.model_selection import train_test_split
 import numpy as np
 import tensorflow as tf
+from keras.datasets import mnist
 
-def hdf5(path, data_key = "data", target_key = "target", flatten = True):
-    """
-        loads data from hdf5: 
-        - hdf5 should have 'train' and 'test' groups 
-        - each group should have 'data' and 'target' dataset or spcify the key
-        - flatten means to flatten images N * (C * H * W) as N * D array
-    """
-    with h5py.File(path, 'r') as hf:
-        train = hf.get('train')
-        X_tr = train.get(data_key)[:]
-        y_tr = train.get(target_key)[:]
-        test = hf.get('test')
-        X_te = test.get(data_key)[:]
-        y_te = test.get(target_key)[:]
-        if flatten:
-            X_tr = X_tr.reshape(X_tr.shape[0], reduce(lambda a, b: a * b, X_tr.shape[1:]))
-            X_te = X_te.reshape(X_te.shape[0], reduce(lambda a, b: a * b, X_te.shape[1:]))
-    return X_tr, y_tr, X_te, y_te
+## Load the dataset
 
+def load_mnist_dataset():
+  # Load the MNIST dataset
+  (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
-import numpy as np
-from keras.utils.np_utils import to_categorical
+  # Reshape the data to a 4D tensor - (sample_number, x_img_size, y_img_size, num_channels)
+  # num_channels = 1 since MNIST has grayscale images
+  x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
+  x_test = x_test.reshape(x_test.shape[0], 28, 28, 1)
 
-def get_usps():
+  # Normalize the data to a range between 0 and 1
+  x_train = x_train.astype('float32') / 255
+  x_test = x_test.astype('float32') / 255
 
-    nb_classes = 10
-    batch_size = 32
-    input_shape = (16,16,1)
+  # Convert the labels to one-hot encoded vectors
+  num_classes = 10
+  y_train = keras.utils.to_categorical(y_train, num_classes)
+  y_test = keras.utils.to_categorical(y_test, num_classes)
 
+  return x_train, x_test, y_train, y_test
 
-    # x_train, y_train, x_test, y_test = arrange_dataset_class_label(0)
-    # x_train = x_train.reshape(50000, 32, 32, 3)
-    # x_test = x_test.reshape(10000, 32, 32, 3)
-    # x_train = x_train.astype('float32')
-    # x_test = x_test.astype('float32')
-    # x_train /= 255
-    # x_test /= 255
-
-    # y_train = to_categorical(y_train, nb_classes)
-    # y_test = to_categorical(y_test, nb_classes)
-
-    #########################  Change the data
-    
-    X_train, y_train, X_test, y_test = hdf5("usps.h5")
-    X_train = X_train.reshape(X_train.shape[0], 16, 16, 1)
-    X_test = X_test.reshape(X_test.shape[0], 16, 16, 1)
-
-    y_train = np.expand_dims(y_train, axis=1)
-    y_test = np.expand_dims(y_test, axis=1)
-
-    X_train = X_train.astype('float32')
-    X_test = X_test.astype('float32')
-    X_train /= 255
-    X_test /= 255
-
-    y_train = to_categorical(y_train, nb_classes)
-    y_test = to_categorical(y_test, nb_classes)
-
-    return (batch_size,  X_train, X_test, y_train, y_test)
-
-batch_size, x_train, x_test, y_train, y_test = get_usps()
-
-batch_size, x_train, x_test, y_train, y_test = get_usps()
+x_train, x_test, y_train, y_test = load_mnist_dataset()
 
 ### Train validation split
 
@@ -125,7 +86,7 @@ model.add(Activation('softmax'))
 # initiate RMSprop optimizer
 opt = keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
 
-model.load('mnist_scratch_train.h5')
+model.load('usps_scratch_train.h5')
 
 # Let's train the model using RMSprop
 model.compile(loss='categorical_crossentropy',
@@ -145,7 +106,7 @@ model.fit(x_train, y_train,
 #     json_file.write(model_json)
 
 # serialize weights to HDF5
-model.save("mnist_to_usps_finetuning_train.h5")
+model.save("usps_to_mnist_finetuning_train.h5")
 print("Saved model to disk!!!!")
 
 score = model.evaluate(x_test, y_test)

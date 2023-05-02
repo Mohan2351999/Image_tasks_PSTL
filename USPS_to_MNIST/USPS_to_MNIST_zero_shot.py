@@ -1,8 +1,9 @@
-from keras.datasets import mnist
-import keras
+import h5py 
+from functools import reduce
 from sklearn.model_selection import train_test_split
 import numpy as np
 import tensorflow as tf
+from keras.datasets import mnist
 
 ## Load the dataset
 
@@ -32,11 +33,6 @@ x_train, x_test, y_train, y_test = load_mnist_dataset()
 
 x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.2, random_state=42)
 
-print("The trainig data shape: ", x_train.shape)
-print("The training labels shape is: ",y_train.shape)
-print("The testing images shape is: ",x_test.shape)
-print("The testinglabels shape is: ",y_test.shape)
-
 ### Load the model(Cifar-Net)
 
 import keras
@@ -56,13 +52,12 @@ epochs = 100
 
 # Set random seed for Numpy
 np.random.seed(10)
-
-# Set random seed for TensorFlow (Keras backend)
 tf.random.set_seed(10)
 
+## Define your model
 model = Sequential()
 model.add(Conv2D(32, (3, 3), padding='same',
-                 input_shape=x_train.shape[1:]))
+                 input_shape=train_data.shape[1:]))
 model.add(Activation('relu'))
 model.add(BatchNormalization())
 model.add(Conv2D(32, (3, 3), padding='same'))
@@ -91,27 +86,28 @@ model.add(Activation('softmax'))
 # initiate RMSprop optimizer
 opt = keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
 
+model.load('usps_scratch_train.h5')
+
 # Let's train the model using RMSprop
 model.compile(loss='categorical_crossentropy',
               optimizer=opt,
               metrics=['accuracy'])
 
-### Assuming no data augmentation required...
-model.fit(x_train, y_train,
-              batch_size=batch_size,
-              epochs=epochs,
-              validation_data=(x_val, y_val),
-              shuffle=True)
+# ### Assuming no data augmentation required...
+# model.fit(x_train, y_train,
+#               batch_size=batch_size,
+#               epochs=epochs,
+#               validation_data=(x_val, y_val),
+#               shuffle=True)
 
 
 # model_json = model.to_json()
-# with open("mnist_scratch_train.json", "w") as json_file:
+# with open("mnist_to_usps_finetuning_train.json", "w") as json_file:
 #     json_file.write(model_json)
 
 # serialize weights to HDF5
-model.save("mnist_scratch_train.h5")
-print("Saved model to disk!!!!")
-
+# model.save("mnist_to_usps_finetuning_train.h5")
+# print("Saved model to disk!!!!")
 
 score = model.evaluate(x_test, y_test)
-print("The evaluation score is: ", score)
+print("The evaluation score is(zero-shot): ", score)
