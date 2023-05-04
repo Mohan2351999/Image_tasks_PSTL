@@ -1,26 +1,28 @@
-from keras.datasets import mnist
-import keras
+import h5py 
+from functools import reduce
 from sklearn.model_selection import train_test_split
 import numpy as np
 import tensorflow as tf
-from keras.datasets import cifar10
+import tensorflow
+import random
+
+from extra_keras_datasets import stl10
 from keras.utils.np_utils import to_categorical
 
-## Load the dataset
+def load_stl10():
+  #Load the STL dataset
+  (x_train, y_train), (x_test, y_test) = stl10.load_data()
 
-def load_cifar10():
-  (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-
-  # Preprocess the data
+  # Preprocess the data - Normalize data
   x_train = x_train.astype('float32') / 255
   x_test = x_test.astype('float32') / 255
 
   y_train = to_categorical(y_train, num_classes=10)
   y_test = to_categorical(y_test, num_classes=10)
 
-  return x_train, y_train, y_train, y_test
+  return x_train, x_test, y_train, y_test
 
-x_train, x_test, y_train, y_test = load_cifar10()
+x_train, x_test, y_train, y_test = load_stl10()
 
 ### Train validation split
 
@@ -50,10 +52,9 @@ epochs = 100
 
 # Set random seed for Numpy
 np.random.seed(10)
-
-# Set random seed for TensorFlow (Keras backend)
 tf.random.set_seed(10)
 
+## Define your model
 model = Sequential()
 model.add(Conv2D(32, (3, 3), padding='same',
                  input_shape=x_train.shape[1:]))
@@ -85,27 +86,28 @@ model.add(Activation('softmax'))
 # initiate RMSprop optimizer
 opt = tensorflow.keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
 
+model.load_weights('/home/mohan235/projects/def-guzdial/mohan235/1_Mohan_GRAF_Work/Image_tasks_PSTL/Scratch_Training/cifar10_scratch_train.h5', by_name=True, skip_mismatch=True)
+
 # Let's train the model using RMSprop
 model.compile(loss='categorical_crossentropy',
               optimizer=opt,
               metrics=['accuracy'])
 
-### Assuming no data augmentation required...
-model.fit(x_train, y_train,
-              batch_size=batch_size,
-              epochs=epochs,
-              validation_data=(x_val, y_val),
-              shuffle=True)
+# ### Assuming no data augmentation required...
+# model.fit(x_train, y_train,
+#               batch_size=batch_size,
+#               epochs=epochs,
+#               validation_data=(x_val, y_val),
+#               shuffle=True)
 
 
 # model_json = model.to_json()
-# with open("mnist_scratch_train.json", "w") as json_file:
+# with open("mnist_to_usps_finetuning_train.json", "w") as json_file:
 #     json_file.write(model_json)
 
 # serialize weights to HDF5
-model.save("cifar10_scratch_train.h5")
-print("Saved model to disk!!!!")
-
+# model.save("mnist_to_usps_finetuning_train.h5")
+# print("Saved model to disk!!!!")
 
 score = model.evaluate(x_test, y_test)
-print("The evaluation score is(scratch training): ", score)
+print("The evaluation score is(zero-shot): ", score)

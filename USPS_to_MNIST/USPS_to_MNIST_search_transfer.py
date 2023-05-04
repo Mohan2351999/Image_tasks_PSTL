@@ -3,7 +3,9 @@ from functools import reduce
 from sklearn.model_selection import train_test_split
 import numpy as np
 import tensorflow as tf
+import tensorflow
 from keras.datasets import mnist
+import random
 
 ## Load the dataset
 
@@ -22,8 +24,8 @@ def load_mnist_dataset():
 
   # Convert the labels to one-hot encoded vectors
   num_classes = 10
-  y_train = keras.utils.to_categorical(y_train, num_classes)
-  y_test = keras.utils.to_categorical(y_test, num_classes)
+  y_train = tensorflow.keras.utils.to_categorical(y_train, num_classes)
+  y_test = tensorflow.keras.utils.to_categorical(y_test, num_classes)
 
   return x_train, x_test, y_train, y_test
 
@@ -34,7 +36,6 @@ x_train, x_test, y_train, y_test = load_mnist_dataset()
 x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.2, random_state=42)
 
 ### Load the model(Cifar-Net)
-
 import keras
 from keras.datasets import cifar10
 from keras.preprocessing.image import ImageDataGenerator
@@ -57,7 +58,7 @@ tf.random.set_seed(10)
 ## Define your model
 model = Sequential()
 model.add(Conv2D(32, (3, 3), padding='same',
-                 input_shape=train_data.shape[1:]))
+                 input_shape=x_train.shape[1:]))
 model.add(Activation('relu'))
 model.add(BatchNormalization())
 model.add(Conv2D(32, (3, 3), padding='same'))
@@ -84,119 +85,118 @@ model.add(Dense(10))
 model.add(Activation('softmax'))
 
 # initiate RMSprop optimizer
-opt = keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
+opt = tensorflow.keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
 
-model.load('usps_scratch_train.h5')
+model.load_weights('/home/mohan235/projects/def-guzdial/mohan235/1_Mohan_GRAF_Work/Image_tasks_PSTL/Scratch_Training/usps_scratch_train.h5', by_name=True, skip_mismatch=True)
 
 # Let's train the model using RMSprop
 model.compile(loss='categorical_crossentropy',
               optimizer=opt,
               metrics=['accuracy'])
 
+score = model.evaluate(x_test, y_test)
+
+print("The testing score on the model", score)
 ## Search Transfer mutation functions. - Modify here
 
 # Add mutation operations - to a whole layer.
-def mutation_1(network):
-    # Change the weights of a particular conv2d layer.
-    conv_locations = []
+from tensorflow.keras.models import clone_model
+from tensorflow.keras.layers import Conv2D
 
-    for i, layer in enumerate(network.layers):
-        # print(i, layer, layer.name)
-        if(isinstance(layer, keras.layers.Conv2DTranspose)):
-        conv_locations.append(i)
-        # print("Conv2DTranspose layer weights shape: ", len(layer.get_weights()), layer.get_weights()[0].shape, layer.get_weights()[1].shape)
+def mutation_1(model):
+    # Create a new model by cloning the original model
+    new_model = clone_model(model)
 
-    # print("All the conv layers:", conv_locations)
-    # Randomly pick a location.
-    random_conv_location = random.choice(conv_locations)
-    for i, layer in enumerate(network.layers):
-        if i== random_conv_location:
-        generated_weights = np.random.uniform(0, 1, size=layer.get_weights()[0].shape)
-        new_weights = np.add(layer.get_weights()[0], generated_weights)
-        assign_weights = [new_weights, layer.get_weights()[1]] # Assigning both weights and bias.
-        network.layers[i].set_weights(assign_weights)
-        print(f"Added weights to a Conv2d layer at index {random_conv_location}")
+    # Choose a random Conv2D layer to modify
+    conv_layers = [layer for layer in new_model.layers if isinstance(layer, Conv2D)]
+    conv_layer = np.random.choice(conv_layers)
+    
+    weights, biases = conv_layer.get_weights()
 
-    # sys.exit("Exiting program here")
-    return network
+    random_tensor = np.random.rand(*weights.shape)
 
-# Subtract mutation operations - to a whole layer.
-def mutation_2(network):
-    # Change the weights of a particular conv2d layer.
-    conv_locations = []
+    modified_weights = weights + random_tensor
 
-    for i, layer in enumerate(network.layers):
-        # print(i, layer, layer.name)
-        if(isinstance(layer, keras.layers.Conv2DTranspose)):
-        conv_locations.append(i)
-        # print("Conv2DTranspose layer weights shape: ", len(layer.get_weights()), layer.get_weights()[0].shape, layer.get_weights()[1].shape)
+    conv_layer.set_weights([modified_weights, biases])
 
-    # print("All the conv layers:", conv_locations)
-    # Randomly pick a location.
-    random_conv_location = random.choice(conv_locations)
-    for i, layer in enumerate(network.layers):
-        if i== random_conv_location:
-        generated_weights = np.random.uniform(0, 1, size=layer.get_weights()[0].shape)
-        new_weights = np.subtract(layer.get_weights()[0], generated_weights)
-        assign_weights = [new_weights, layer.get_weights()[1]] # Assigning both weights and bias.
-        network.layers[i].set_weights(assign_weights)
-        print(f"Subtract weights to a Conv2d layer at index {random_conv_location}")
+    opt = tensorflow.keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
+    new_model.compile(loss='categorical_crossentropy',
+              optimizer=opt,
+              metrics=['accuracy'])
 
-    # sys.exit("Exiting program here")
-    return network
+    return new_model
 
-# Multiply mutation operations - to a whole layer.
-def mutation_3(network):
-    # Change the weights of a particular conv2d layer.
-    conv_locations = []
+def mutation_2(model):
+    # Create a new model by cloning the original model
+    new_model = clone_model(model)
 
-    for i, layer in enumerate(network.layers):
-        # print(i, layer, layer.name)
-        if(isinstance(layer, keras.layers.Conv2DTranspose)):
-        conv_locations.append(i)
-        # print("Conv2DTranspose layer weights shape: ", len(layer.get_weights()), layer.get_weights()[0].shape, layer.get_weights()[1].shape)
+    # Choose a random Conv2D layer to modify
+    conv_layers = [layer for layer in new_model.layers if isinstance(layer, Conv2D)]
+    conv_layer = np.random.choice(conv_layers)
+    
+    weights, biases = conv_layer.get_weights()
 
-    # print("All the conv layers:", conv_locations)
-    # Randomly pick a location.
-    random_conv_location = random.choice(conv_locations)
-    for i, layer in enumerate(network.layers):
-        if i== random_conv_location:
-        generated_weights = np.random.uniform(0, 1, size=layer.get_weights()[0].shape)
-        new_weights = np.multiply(layer.get_weights()[0], generated_weights)
-        assign_weights = [new_weights, layer.get_weights()[1]] # Assigning both weights and bias.
-        network.layers[i].set_weights(assign_weights)
-        print(f"Multiply weights to a Conv2d layer at index {random_conv_location}")
+    random_tensor = np.random.rand(*weights.shape)
 
-    # sys.exit("Exiting program here")
-    return network
+    modified_weights = weights - random_tensor
 
-# Divide mutation operations - to a whole layer.
-def mutation_4(network):
-    # Change the weights of a particular conv2d layer.
-    conv_locations = []
+    conv_layer.set_weights([modified_weights, biases])
 
-    for i, layer in enumerate(network.layers):
-        # print(i, layer, layer.name)
-        if(isinstance(layer, keras.layers.Conv2DTranspose)):
-        conv_locations.append(i)
-        # print("Conv2DTranspose layer weights shape: ", len(layer.get_weights()), layer.get_weights()[0].shape, layer.get_weights()[1].shape)
+    opt = tensorflow.keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
+    new_model.compile(loss='categorical_crossentropy',
+              optimizer=opt,
+              metrics=['accuracy'])
 
-    # print("All the conv layers:", conv_locations)
-    # Randomly pick a location.
-    random_conv_location = random.choice(conv_locations)
-    for i, layer in enumerate(network.layers):
-        if i== random_conv_location:
-        generated_weights = np.random.uniform(0, 1, size=layer.get_weights()[0].shape)
-        new_weights = np.divide(layer.get_weights()[0], generated_weights)
-        assign_weights = [new_weights, layer.get_weights()[1]] # Assigning both weights and bias.
-        network.layers[i].set_weights(assign_weights)
-        print(f"Divide weights to a Conv2d layer at index {random_conv_location}")
+    return new_model
 
-    # sys.exit("Exiting program here")
-    return network
+def mutation_3(model):
+    # Create a new model by cloning the original model
+    new_model = clone_model(model)
+
+    # Choose a random Conv2D layer to modify
+    conv_layers = [layer for layer in new_model.layers if isinstance(layer, Conv2D)]
+    conv_layer = np.random.choice(conv_layers)
+    
+    weights, biases = conv_layer.get_weights()
+
+    random_tensor = np.random.rand(*weights.shape)
+
+    modified_weights = weights * random_tensor
+
+    conv_layer.set_weights([modified_weights, biases])
+
+    opt = tensorflow.keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
+    new_model.compile(loss='categorical_crossentropy',
+              optimizer=opt,
+              metrics=['accuracy'])
+
+    return new_model
+
+def mutation_4(model):
+    # Create a new model by cloning the original model
+    new_model = clone_model(model)
+
+    # Choose a random Conv2D layer to modify
+    conv_layers = [layer for layer in new_model.layers if isinstance(layer, Conv2D)]
+    conv_layer = np.random.choice(conv_layers)
+    
+    weights, biases = conv_layer.get_weights()
+
+    random_tensor = np.random.rand(*weights.shape)
+
+    modified_weights = weights / random_tensor
+
+    conv_layer.set_weights([modified_weights, biases])
+
+    opt = tensorflow.keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
+    new_model.compile(loss='categorical_crossentropy',
+              optimizer=opt,
+              metrics=['accuracy'])
+
+    return new_model
 
 def mutations(network):
-    x = random.randint(0, 5)
+    x = random.randint(0, 3)
     print(f">>>>>>>>>> Choose the mutation {x}")
     if x ==0:
         # Add weights to a layer.
@@ -215,14 +215,16 @@ def mutations(network):
 
 # Returns the loss on the testing data.
 def fitness(model):
-    return model.evaluate(x_train, y_train, verbose=2)
+    return model.evaluate(x_train, y_train, verbose=2)[0]
+
+def test_loss(model):
+    return model.evaluate(x_test, y_test, verbose=2)[0]
 
 import os
 iterations = 100
 neighbours_count = 10
 min_loss = 10e6
-
-np.random.seed(10)
+np.random.seed(42)
 
 base_model = model
 for i in range(iterations):
@@ -240,6 +242,7 @@ for i in range(iterations):
 print("Saved the model!!")
 base_model.save("search_transfer_usps_to_mnist.h5")
 
+
 score = base_model.evaluate(x_test, y_test)
 print("The evaluation score (search transfer is): ", score)
 
@@ -251,5 +254,7 @@ base_model.fit(x_train, y_train,
               validation_data=(x_val, y_val),
               shuffle=True)
 
+base_model.save("search_transfer+backprop_usps_to_mnist.h5")
+print("Saved the model after performing the search transfer+ backprop")
 after_backprop_score = base_model.evaluate(x_test, y_test)
 print("The evaluation score(search transfer and backprop is):", after_backprop_score)

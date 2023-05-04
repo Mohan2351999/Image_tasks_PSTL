@@ -3,10 +3,11 @@ import keras
 from sklearn.model_selection import train_test_split
 import numpy as np
 import tensorflow as tf
-
+import tensorflow
 import keras
+
 from extra_keras_datasets import stl10
-from keras.utils import to_catrical
+from keras.utils.np_utils import to_categorical
 
 def load_stl10():
   #Load the STL dataset
@@ -84,7 +85,7 @@ model.add(Dense(10))
 model.add(Activation('softmax'))
 
 # initiate RMSprop optimizer
-opt = keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
+opt = tensorflow.keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
 
 # Let's train the model using RMSprop
 model.compile(loss='categorical_crossentropy',

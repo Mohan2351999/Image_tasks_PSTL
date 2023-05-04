@@ -4,6 +4,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import tensorflow as tf
 from keras.datasets import mnist
+import tensorflow
 
 ## Load the dataset
 
@@ -22,8 +23,8 @@ def load_mnist_dataset():
 
   # Convert the labels to one-hot encoded vectors
   num_classes = 10
-  y_train = keras.utils.to_categorical(y_train, num_classes)
-  y_test = keras.utils.to_categorical(y_test, num_classes)
+  y_train = tensorflow.keras.utils.to_categorical(y_train, num_classes)
+  y_test = tensorflow.keras.utils.to_categorical(y_test, num_classes)
 
   return x_train, x_test, y_train, y_test
 
@@ -57,7 +58,7 @@ tf.random.set_seed(10)
 ## Define your model
 model = Sequential()
 model.add(Conv2D(32, (3, 3), padding='same',
-                 input_shape=train_data.shape[1:]))
+                 input_shape=x_train.shape[1:]))
 model.add(Activation('relu'))
 model.add(BatchNormalization())
 model.add(Conv2D(32, (3, 3), padding='same'))
@@ -84,9 +85,9 @@ model.add(Dense(10))
 model.add(Activation('softmax'))
 
 # initiate RMSprop optimizer
-opt = keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
+opt = tensorflow.keras.optimizers.RMSprop(lr=0.0001, decay=1e-6)
 
-model.load('usps_scratch_train.h5')
+model.load_weights('/home/mohan235/projects/def-guzdial/mohan235/1_Mohan_GRAF_Work/Image_tasks_PSTL/Scratch_Training/usps_scratch_train.h5', by_name=True, skip_mismatch=True)
 
 # Let's train the model using RMSprop
 model.compile(loss='categorical_crossentropy',
